@@ -1,0 +1,4 @@
+[
+FUN f int [x:bool,y:int](if x y 0);
+ECHO ([b:bool](f b 42) true)
+]

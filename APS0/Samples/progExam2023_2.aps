@@ -1,0 +1,6 @@
+[
+CONST x int 3;
+FUN f int [ x : int ] ( add x 1);
+FUN f bool [ y : int ] ( eq x ( f y ));
+ECHO ( if ( f 2) x 0)
+]

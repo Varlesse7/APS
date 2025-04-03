@@ -1,0 +1,6 @@
+[
+CONST u int 3;
+CONST v int 2;
+FUN f int [x:int, y:int ] (add x y);
+ECHO (f u v)
+]

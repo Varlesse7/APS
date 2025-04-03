@@ -1,0 +1,5 @@
+[
+CONST x int 42;
+FUN f int [x:bool](if x 0 1);
+ECHO (add x (f true))
+]

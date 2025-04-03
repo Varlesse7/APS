@@ -1,0 +1,15 @@
+(executable
+ (modules eval)
+ (libraries APS)
+ (name eval))
+
+(ocamlyacc
+ (modules parser))
+
+(library
+ (name APS)
+ (public_name APS)
+ (modules ast parser lexer ))
+
+(ocamllex
+ (modules lexer))

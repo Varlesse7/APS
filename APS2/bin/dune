@@ -1,0 +1,15 @@
+(executable
+ (modules inter)
+ (libraries APS1A)
+ (name inter))
+
+(ocamlyacc
+ (modules parser))
+
+(library
+ (name APS1A)
+ (public_name APS1A)
+ (modules ast parser lexer ))
+
+(ocamllex
+ (modules lexer))

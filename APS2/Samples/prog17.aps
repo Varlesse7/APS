@@ -1,0 +1,8 @@
+[ 
+    VAR x int;
+    PROC p [var y:int] [SET x (add x 1);
+        ECHO y];
+    SET x 0;
+    WHILE (lt x 10) 
+        [CALL p (adr x)]
+]

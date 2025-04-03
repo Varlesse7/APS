@@ -1,0 +1,1 @@
+[VAR x int; SET x 8; ECHO x]

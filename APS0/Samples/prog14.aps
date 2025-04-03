@@ -1,0 +1,2 @@
+[FUN f (int->int) [x:(int->int), n:int] [y:int] y ; 
+    ECHO 3]
