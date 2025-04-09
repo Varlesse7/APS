@@ -1,0 +1,4 @@
+- **APS actuel:** APS2 (evaluateur et printer fini)
+- **Etat de fonctionnement:** Tout les APS precédant ainsi que APS2 devrait marcher 
+- **Répartition du travail:** Aucune (projet monome)
+- **Source d'inspiration:** Pas de source extérieur sauf pour la syntaxe du programme ocaml ou j'ai pu regarde la documentation OCaml et demandée à chatGPT. 

@@ -1,14 +1,14 @@
 (executable
- (modules inter)
- (libraries APS1A)
- (name inter))
+ (modules eval)
+ (libraries APS2)
+ (name eval))
 
 (ocamlyacc
  (modules parser))
 
 (library
- (name APS1A)
- (public_name APS1A)
+ (name APS2)
+ (public_name APS2)
  (modules ast parser lexer ))
 
 (ocamllex

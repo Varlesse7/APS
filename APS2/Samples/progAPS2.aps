@@ -1,0 +1,17 @@
+[
+PROC mapset [f:(int -> int), xs:(vec int)]
+[
+VAR i int;
+SET i 0;
+WHILE (lt i (len xs)) [
+SET (nth xs i) (f (nth xs i));
+SET i (add i 1)
+]
+];
+CONST tab (vec int) (alloc 2);
+CONST a int 8;
+SET (nth tab 0) 12;
+SET (nth tab 1) 34;
+CALL mapset [x:int](add x a) tab;
+ECHO (nth tab 0)
+]

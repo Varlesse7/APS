@@ -1,4 +1,4 @@
-open APS1A
+open APS2
 open Ast
 
 exception Foo of string
@@ -15,7 +15,7 @@ and aps_valeur =
   | InF of expr * arg list * envMap
   | InFR of expr * arg list * ident * envMap
   | InPrim of ((aps_valeur list) -> aps_valeur)
-  | InB of aps_valeur * int (* Pemet la redirection alors que pointer directement sur a0 nous le permetteras pas*)
+  | InB of int * int (* Pemet la redirection alors que pointer directement sur a0 nous le permetteras pas*)
 
   let pAct = ref 0
   let mem = ref (IntMap.empty:(aps_valeur IntMap.t))
@@ -63,23 +63,21 @@ and aps_valeur =
     mem := IntMap.add !pAct (InZ (-99999)) !mem;
     pAct := !pAct + 1
   
-  let nalloc_mem n = 
+  let rec nalloc_mem n = 
     if n > 0 
-      then mem := Int.add !pact (InB) !mem;
-        p := !pAct + 1
-        nalloc_mem n-1;
+		then (mem := IntMap.add !pAct (InZ(-99999)) !mem;
+			pAct := !pAct + 1;
+			nalloc_mem (n-1))
+		else 0
   
-  let maj_mem p v = 
-    mem := IntMap.update p v !mem
-  
-  let init_Env_Primi env =
+    let init_Env_Primi env =
     let env = StringMap.add ("add") (InPrim(aps_add)) env in
     let env = StringMap.add "sub" (InPrim(aps_sub)) env in 
     let env = StringMap.add "div" (InPrim(aps_div)) env in
     let env = StringMap.add "mul" (InPrim(aps_mul)) env in
     let env = StringMap.add "not" (InPrim(aps_not)) env in
     let env = StringMap.add "lt" (InPrim(aps_lt)) env in
-    StringMap.add "eq" (InPrim(aps_eq)) env  
+    StringMap.add "eq" (InPrim(aps_eq)) env
   
   let rec eval_expr e (env:(envMap)) = 
     match e with 
@@ -88,9 +86,8 @@ and aps_valeur =
       match StringMap.find_opt (x) (env) with 
           Some(InA(x)) -> (
             match (IntMap.find_opt x !mem) with
-                Some(InZ(x)) -> InZ(x)
-              | Some(_) -> raise (Foo "Error adresse not an int")
-              | None -> raise (Foo "Error adresse not an int")
+                Some(v) -> v
+              | None -> raise (Foo "Error adresse not in the map")
           )
         | Some(x) -> x
         | None -> raise (Foo "Error var not in env")) 
@@ -147,10 +144,80 @@ and aps_valeur =
           else InZ(1) 
     | ASTFermeture(a1, e) -> 
       InF(e, a1, env)  
+    | ASTAlloc e -> (
+      match (eval_expr e env) with 
+        InZ n -> (
+        let debutTab = !pAct in 
+          let _ = nalloc_mem n in 
+          	InB(debutTab, n)
+				)
+			| _ -> assert false
+    )
+    | ASTVset (e1, e2, e3)->(
+      match (eval_expr e1 env) with 
+        InB (a,n) -> (
+          match (eval_expr e2 env) with 
+            InZ (i) -> (
+              let v = eval_expr e3 env in 
+                let _ = IntMap.add (a+i) v !mem in 
+									InB(a,n)
+            )
+          | _ -> assert false
+        )
+      | _ -> assert false
+    )
+    | ASTNthExpr (e1, e2) -> (
+      match (eval_expr e1 env) with
+        InB(a,_) -> (
+          match (eval_expr e2 env) with
+            InZ (i) -> (
+              match (IntMap.find_opt (a+i) !mem) with 
+                Some x -> x
+              |  None -> assert false
+            )
+          | _ -> assert false
+        )
+      | _ -> assert false
+    )
+    | ASTLen e -> (
+      match (eval_expr e env) with 
+				InB(_,n) -> InZ(n)
+			| _ -> assert false
+    )
   and eval_exprp e (env:envMap) = 
     match e with 
       ASTExpr e1 -> eval_expr e1 env
     | ASTAdr (i) -> StringMap.find i env
+	and eval_lval e (env:envMap) = 
+		match e with 
+			ASTLval i -> (
+				match (StringMap.find_opt i env) with 
+					Some (InA a) -> a
+				| _ -> assert false
+			)
+		| ASTNth (lv, e) -> (
+			match lv with 
+				ASTLval x -> (
+					match (StringMap.find_opt x env) with 
+						Some (InB(a,_)) -> (
+							match (eval_expr e env) with 
+								InZ i -> a+i
+							| _ -> assert false
+						)
+					| _ -> assert false
+				)
+			| _ -> (
+				let a1 = eval_lval lv env in 
+					match (IntMap.find_opt a1 !mem) with 
+						Some (InB(a2, _)) -> (
+							match (eval_expr e env) with 
+								InZ i -> a2+i
+							| _ -> assert false
+						)
+					| _ -> assert false
+			)
+		)
+			
   and match_argps args es env1 env2 = 
     match args with 
         [] -> env2
@@ -189,7 +256,8 @@ and aps_valeur =
         [eval_expr e1 env] @ eval_exprs es1 env 
   and eval_def d (env:(envMap))= 
     match d with
-        ASTConst(i, _, e) -> StringMap.add i (eval_expr e env) env 
+        ASTConst(i, _, e) -> 
+					StringMap.add i (eval_expr e env) env 
       | ASTVarD(i, _) -> 
         let env = StringMap.add i (InA(!pAct)) env in
           alloc_mem ();
@@ -205,16 +273,12 @@ and aps_valeur =
             InZ(x) -> fs@[x]
             | _ -> assert false
             )
-        | ASTSet(i, e) -> (
-          match (StringMap.find_opt i env) with 
-            Some(InA(p)) -> (
-              let res = eval_expr e env in 
-                match res  with 
-                    InZ(_) ->  maj_mem p (Option.map (fun _ -> res)); fs
-                  | _ -> assert false 
-            )
-            | _ -> assert false 
-        )
+        | ASTSet(lv, e) -> (
+          let v = eval_expr e env in
+							let a = eval_lval lv env in 
+								mem:= IntMap.add a v !mem; 
+								fs
+						)
       | ASTIfI(e, bk1, bk2) -> (
           match (eval_expr e env) with 
               InZ(1) ->  
@@ -259,16 +323,17 @@ and aps_valeur =
     match f with 
       [] -> ()
     | [f1] -> print_endline (string_of_int f1)
-    | f1::f2 -> print_endline (string_of_int f1); 
+    | f1::f2 -> print_endline (string_of_int f1);
       print_Stat f2
   and eval_prog p env = 
     let (_, fs) = eval_block p env in 
       print_Stat fs 
   and eval_block bl env = 
     match bl with 
-      ASTBlock (cmds) -> 
+      ASTBlock (cmds) -> (
         let(env, t) = eval_cmds cmds env [] in
           (env,t)
+			)
   
   let _ = 
     let fname = Sys.argv.(1) in
