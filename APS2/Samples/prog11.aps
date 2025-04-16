@@ -1,1 +1,0 @@
-[FUN REC test int [y:int] (add y (test 5)); ECHO (test 1)]

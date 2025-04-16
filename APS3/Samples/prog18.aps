@@ -1,0 +1,5 @@
+[ 
+    VAR x int; 
+    PROC p [y:int] [ECHO y];
+    CALL p (adr x)
+]

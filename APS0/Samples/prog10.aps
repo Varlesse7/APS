@@ -1,1 +1,0 @@
-[FUN test (int->int) [y:(int->int)] [z:(int)]y; ECHO ((test [z:int] (add 1 z))  2)]
